@@ -5,7 +5,7 @@ import path from 'path';
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { AIMessage } from "@langchain/core/messages";
 
-export async function createAgent() {
+async function createAgent() {
   const mcpClient = new MultiServerMCPClient({
     'shop-server': {
       transport: 'stdio',
@@ -58,16 +58,13 @@ export async function createAgent() {
   return app;
 }
 
-let agentRunnable: any = null;
+let agentInstance: any = null;
 
-export async function getAgentRunnable() {
-  if (agentRunnable) return agentRunnable;
+export async function getAgentInstance() {
+  if (agentInstance) return agentInstance;
 
-  const memory = new MemorySaver();
+  agentInstance = await createAgent();
 
-  const app = await createAgent();
-
-  agentRunnable = app
-
-  return agentRunnable;
+  console.log('Agent instance ready!');
+  return agentInstance;
 }
