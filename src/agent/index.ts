@@ -4,6 +4,7 @@ import { MemorySaver, MessagesAnnotation, StateGraph } from "@langchain/langgrap
 import path from 'path';
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { AIMessage } from "@langchain/core/messages";
+import 'dotenv/config';
 
 async function createAgent() {
   const mcpClient = new MultiServerMCPClient({
