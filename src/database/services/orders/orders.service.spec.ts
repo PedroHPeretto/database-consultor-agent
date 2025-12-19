@@ -33,7 +33,7 @@ describe('Orders service', () => {
 
       expect(result).toEqual(mockOrder);
       expect(mockDb.get).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id'),
+        expect.stringContaining('SELECT * FROM orders WHERE id = ?'),
         [1],
         expect.any(Function)
       );
@@ -48,7 +48,7 @@ describe('Orders service', () => {
 
       expect(result).toBeUndefined();
       expect(mockDb.get).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id'),
+        expect.stringContaining('SELECT * FROM orders WHERE id = ?'),
         [999],
         expect.any(Function)
       );
@@ -70,15 +70,15 @@ describe('Orders service', () => {
       const mockOrder1 = { id: 1, customer_id: 1, product: 'Mouse', price: 200.00, status: 'DELIVERED', order_date: '2025-07-27' };
       const mockOrder2 = { id: 2, customer_id: 1, product: 'Keyboard', price: 200.00, status: 'DELAYED', order_date: '2025-09-30' };
 
-      mockDb.get.mockImplementation((query: string, params: any[], callback: any) => {
+      mockDb.all.mockImplementation((query: string, params: any[], callback: any) => {
         callback(null, [mockOrder1, mockOrder2]);
       });
 
       const result = await getAllOrdersFromUser(1);
 
       expect(result).toEqual([mockOrder1, mockOrder2]);
-      expect(mockDb.get).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id'),
+      expect(mockDb.all).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM orders WHERE customer_id = ?'),
         [1],
         expect.any(Function)
       );
@@ -87,7 +87,7 @@ describe('Orders service', () => {
     it('Should throw an error if the database fail', async () => {
       const mockError = new Error('Database connection failed');
 
-      mockDb.get.mockImplementation((_: any, __: any, callback: any) => {
+      mockDb.all.mockImplementation((_: any, __: any, callback: any) => {
         callback(mockError, null);
       });
 
