@@ -58,9 +58,11 @@ async function createAgent() {
   return app;
 }
 
-let agentInstance: any = null;
+export type AgentApp = Awaited<ReturnType<typeof createAgent>>
 
-export async function getAgentInstance() {
+let agentInstance: AgentApp | null = null;
+
+export async function getAgentInstance(): Promise<AgentApp> {
   if (agentInstance) return agentInstance;
 
   agentInstance = await createAgent();
