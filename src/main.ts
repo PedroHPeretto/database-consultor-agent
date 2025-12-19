@@ -3,7 +3,7 @@ import cors from 'cors';
 import { HumanMessage } from '@langchain/core/messages';
 import { AgentApp, getAgentInstance } from './agent';
 
-const app = express()
+export const app = express()
 
 app.use(cors());
 app.use(express.json());
@@ -12,7 +12,7 @@ const PORT = process.env.PORT
 
 let agent: AgentApp | null = null
 
-async function initializeServer() {
+export async function initializeServer() {
   try {
     console.log('Initializing Agent and MCP tools...');
     
@@ -42,7 +42,7 @@ app.post('/chat', async (req, res) => {
 
   if (!question || !threadId) {
     console.error(`Missing question or thread ID on request`);
-    res.status(400).json({ error: 'Missing question or thread ID' });
+    return res.status(400).json({ error: 'Missing question or thread ID' });
   }
 
   try {;
@@ -87,4 +87,6 @@ app.get('/health', (req, res) => {
   }
 });
 
-initializeServer();
+if (require.main === module) {
+  initializeServer();
+}
