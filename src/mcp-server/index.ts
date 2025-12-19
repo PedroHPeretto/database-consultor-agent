@@ -1,34 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import sqlite from 'sqlite3';
-import path from 'path';
 import { z } from 'zod';
-
-const dbPath = path.resolve(__dirname, '../database/shop.db');
-
-const db = new sqlite.Database(dbPath, sqlite.OPEN_READONLY, (error) => {
-  if (error) {
-    console.error('Failed to load database', error.message);
-  }
-});
-
-const dbGet = <T>(query: string, params: any[]): Promise<T | undefined> => {
-  return new Promise<any>((resolve, reject) => {
-    db.get(query, params, (error, row) => {
-      if (error) reject(error);
-      else resolve(row as T);
-    });
-  });
-};
-
-const dbAll = <T>(query: string, params: any[]): Promise<T | undefined> => {
-  return new Promise<any>((resolve, reject) => {
-    db.all(query, params, (error, rows) => {
-      if (error) reject(error);
-      else resolve(rows as T);
-    });
-  });
-};
+import { getAllOrdersFromUser, getOrderById } from "../database/services/orders/orders.service";
 
 const server = new McpServer(
   {
@@ -53,10 +26,7 @@ server.registerTool(
   },
   async ({ order_id }) => {
     try {
-      const order = await dbGet(
-        'SELECT id, product, status, price, order_date FROM orders WHERE id = ?',
-        [order_id]
-      )
+      const order = await getOrderById(order_id);
 
       if (!order) {
         return {
@@ -86,21 +56,7 @@ server.registerTool(
   },
   async ({ customer_id }) => {
     try {
-      const customer = await dbGet(
-        'SELECT id, name, email FROM customers WHERE id = ?',
-        [customer_id]
-      )
-
-      if (!customer) {
-        return {
-          content: [{ type: 'text', text: `Customer ${customer_id} not found` }],
-        };
-      }
-
-      const orders = await dbAll(
-        'SELECT id, product, status, price, order_date FROM orders WHERE customer_id = ?',
-        [customer_id]
-      )
+      const orders = await getAllOrdersFromUser(customer_id);
 
       return {
         content: [{ type: 'text', text: JSON.stringify(orders, null, 2) }],
