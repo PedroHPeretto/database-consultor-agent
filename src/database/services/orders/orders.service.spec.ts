@@ -1,5 +1,7 @@
-import sqlite, { OPEN_READONLY } from 'sqlite3';
-import { getAllOrdersFromUser, getOrderById } from './orders.service';
+import { getAllOrdersFromCustomer, getOrderById } from './orders.service';
+import { getCustomerById } from '../customers/customers.service';
+
+jest.mock('../customers/customers.service');
 
 jest.mock('sqlite3', () => {
   const mockDb = {
@@ -12,6 +14,8 @@ jest.mock('sqlite3', () => {
     OPEN_READONLY: 1,
   };
 });
+
+const mockGetCustomerById = getCustomerById as jest.Mock;
 
 describe('Orders service', () => {
   let mockDb: any;
@@ -65,18 +69,23 @@ describe('Orders service', () => {
     });
   });
 
-  describe('Get all orders by user', () => {
-    it('Should return all orders made by the user', async () => {
+  describe('Get all orders made by the customer', () => {
+    const mockCustomer = { id: 1, name: 'Pedro', email: 'pedro@email.com' };
+
+    it('Should return all orders made by the customer', async () => {
       const mockOrder1 = { id: 1, customer_id: 1, product: 'Mouse', price: 200.00, status: 'DELIVERED', order_date: '2025-07-27' };
       const mockOrder2 = { id: 2, customer_id: 1, product: 'Keyboard', price: 200.00, status: 'DELAYED', order_date: '2025-09-30' };
+
+      mockGetCustomerById.mockResolvedValue(mockCustomer);
 
       mockDb.all.mockImplementation((query: string, params: any[], callback: any) => {
         callback(null, [mockOrder1, mockOrder2]);
       });
 
-      const result = await getAllOrdersFromUser(1);
+      const result = await getAllOrdersFromCustomer(1);
 
       expect(result).toEqual([mockOrder1, mockOrder2]);
+      expect(mockGetCustomerById).toHaveBeenCalledWith(1);
       expect(mockDb.all).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM orders WHERE customer_id = ?'),
         [1],
@@ -84,14 +93,23 @@ describe('Orders service', () => {
       );
     });
 
+    it('Should throw an error if user was not found', async () => {
+      mockGetCustomerById.mockResolvedValue(null);
+
+      await expect(getAllOrdersFromCustomer(1)).rejects.toThrow('Customer not found');
+      expect(mockGetCustomerById).toHaveBeenCalledWith(1);
+    });
+
     it('Should throw an error if the database fail', async () => {
+      mockGetCustomerById.mockResolvedValue(mockCustomer);
+
       const mockError = new Error('Database connection failed');
 
       mockDb.all.mockImplementation((_: any, __: any, callback: any) => {
         callback(mockError, null);
       });
 
-      await expect(getAllOrdersFromUser(1)).rejects.toThrow('Database connection failed');
+      await expect(getAllOrdersFromCustomer(1)).rejects.toThrow('Database connection failed');
     });
   });
 });

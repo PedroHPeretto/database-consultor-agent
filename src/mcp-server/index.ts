@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from 'zod';
-import { getAllOrdersFromUser, getOrderById } from "../database/services/orders/orders.service";
+import { getAllOrdersFromCustomer, getOrderById } from "../database/services/orders/orders.service";
+import { getCustomerById } from "../database/services/customers/customers.service";
 
 const server = new McpServer(
   {
@@ -17,7 +18,37 @@ const server = new McpServer(
 );
 
 server.registerTool(
-  "consult_order_status",
+  "get_customer",
+  {
+    inputSchema: {
+      customer_id: z.number()
+    },
+    description: 'Number that indentifies the customer (example: 1, 2, 38, 57)',
+  },
+  async ({ customer_id }) => {
+    try {
+      const customer = await getCustomerById(customer_id);
+
+      if (!customer) {
+        return {
+          content: [{ type: 'text', text: `Customer ${customer_id} not found` }],
+        };
+      }
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify(customer, null, 2) }],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: 'text', text: `Error on processing: ${error.message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "get_order",
   {
     inputSchema: {
       order_id: z.number()
@@ -56,7 +87,7 @@ server.registerTool(
   },
   async ({ customer_id }) => {
     try {
-      const orders = await getAllOrdersFromUser(customer_id);
+      const orders = await getAllOrdersFromCustomer(customer_id);
 
       return {
         content: [{ type: 'text', text: JSON.stringify(orders, null, 2) }],

@@ -1,5 +1,6 @@
 import sqlite from 'sqlite3';
 import path from 'path';
+import { getCustomerById } from '../customers/customers.service';
 
 const dbPath = path.resolve(__dirname, 'shop.db');
 
@@ -27,8 +28,14 @@ export const getOrderById = <T>(id: number): Promise<T> => {
   });
 };
 
-export const getAllOrdersFromUser = <T>(id: number): Promise<T> => {
+export const getAllOrdersFromCustomer = async <T>(id: number): Promise<T> => {
   const db = getDb();
+
+  const customer = await getCustomerById(id);
+  if (!customer) {
+    console.error(`Customer ${id} not found`);
+    throw new Error('Customer not found');
+  }
 
   return new Promise((resolve, reject) => {
     db.all(
